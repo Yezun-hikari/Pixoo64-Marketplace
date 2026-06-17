@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Pixoo Hub Marketplace</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>Pixoo Hub</h2>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <ul id="nav-list">
+                    <li class="nav-item active" data-view="catalog" onclick="switchView('catalog')">
+                        <span class="material-icons-round icon">store</span>
+                        <span>Catalog</span>
+                    </li>
+                    <!-- Dynamic Plugin Tabs will be injected here -->
+                </ul>
+            </nav>
+
+            <div class="sidebar-footer">
+                <li class="nav-item" data-view="settings" onclick="switchView('settings')">
+                    <span class="material-icons-round icon">settings</span>
+                    <span>Settings</span>
+                </li>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="content">
+            
+            <!-- Catalog View -->
+            <section id="view-catalog" class="view-section active">
+                <div class="view-header">
+                    <h1>Marketplace Catalog</h1>
+                    <div class="header-actions">
+                        <button class="btn btn-secondary" onclick="forceScan()" aria-label="Scan for updates">
+                            <span class="material-icons-round" aria-hidden="true">refresh</span> Scan Updates
+                        </button>
+                        <button class="btn btn-primary" onclick="openRepoModal()" aria-label="Add repository">
+                            <span class="material-icons-round" aria-hidden="true">add</span> Repository
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="grid-container" id="catalog-grid">
+                    <!-- Repositories will be loaded here -->
+                </div>
+            </section>
+
+            <!-- Settings View -->
+            <section id="view-settings" class="view-section">
+                <div class="view-header">
+                    <h1>Settings</h1>
+                </div>
+                
+                <div class="card settings-card">
+                    <div class="form-group">
+                        <label>Pixoo IP Address</label>
+                        <div class="input-group">
+                            <input type="text" id="pixoo-ip" placeholder="Leave empty for Auto-Discovery">
+                        </div>
+                    </div>
+                    <div class="form-group row-group">
+                    <label for="display-mode">Display Mode</label>
+                    <div style="display: flex; gap: 8px;">
+                        <select id="display-mode" class="form-control" style="width: 200px;" onchange="togglePriorityGear()" aria-label="Display mode">
+                            <option value="priority">Priority Based</option>
+                            <option value="rotation">Rotation Based</option>
+                        </select>
+                        <button id="priority-gear-btn" class="btn btn-secondary" onclick="openPriorityModal()" style="display: none; padding: 0 12px;" title="Manage Priorities" aria-label="Manage Priorities">
+                            <span class="material-icons-round" aria-hidden="true">settings</span>
+                        </button>
+                    </div>
+                </div>
+                    <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+                </div>
+            </section>
+            
+            <!-- Dynamic Plugin Config Views will be injected here -->
+            <div id="dynamic-views-container"></div>
+
+        </main>
+    </div>
+
+    <!-- Repository Modal -->
+    <div id="repo-modal" class="modal">
+        <div class="modal-content glass-panel">
+            <div class="modal-header">
+                <h3>Manage Repositories</h3>
+                <span class="close-btn" onclick="closeRepoModal()" aria-label="Close" role="button" tabindex="0">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="form-group row-group">
+                    <input type="text" id="new-repo-url" placeholder="https://github.com/user/repo">
+                    <button class="btn btn-primary" onclick="addRepository()">Add</button>
+                </div>
+                <div class="repo-list-container">
+                    <ul id="repo-list" class="repo-list">
+                        <!-- Loaded via JS -->
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Priority Management Modal -->
+    <div id="priority-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Priority Management</h2>
+                <button class="icon-btn" onclick="closePriorityModal()" aria-label="Close priorities">
+                    <span class="material-icons-round" aria-hidden="true">close</span>
+                </button>
+            </div>
+            <p style="color:var(--text-muted); margin-bottom: 16px; font-size: 0.9em;">Drag and drop to reorder plugins. Top items have the highest priority.</p>
+            <ul id="priority-list" class="priority-list">
+                <!-- Populated dynamically -->
+            </ul>
+            <div class="modal-actions" style="margin-top: 24px; display: flex; justify-content: flex-end;">
+                <button class="btn btn-primary" onclick="savePriorities()">Save Priorities</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>

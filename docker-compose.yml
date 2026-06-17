@@ -1,0 +1,10 @@
+version: '3.8'
+
+services:
+  hub:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./plugins:/app/plugins
+    restart: unless-stopped
