@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+plugins/
+*.pyc
+.env
+settings.json
+repositories.json
