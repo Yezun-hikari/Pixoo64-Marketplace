@@ -13,7 +13,7 @@
 
 ---
 
-## 🌟 Features
+## <a id="features"></a>🌟 Features
 
 - **Modern Glassmorphism UI:** A beautiful, dynamic Single Page Application (SPA) dashboard.
 - **Plugin Marketplace:** Add GitHub repositories and browse available plugins seamlessly.
@@ -23,7 +23,7 @@
 
 ---
 
-## 🚀 Installation
+## <a id="installation"></a>🚀 Installation
 
 The recommended way to run Pixoo Hub is via **Docker**.
 
@@ -61,7 +61,7 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000
 
 ---
 
-## 💻 Usage
+## <a id="usage"></a>💻 Usage
 
 ### 1. Dashboard Settings
 When you first open the dashboard, navigate to the **Settings** tab.
@@ -78,7 +78,7 @@ When you first open the dashboard, navigate to the **Settings** tab.
 
 ---
 
-## 🛠 Creating a Plugin
+## <a id="creating-a-plugin"></a>🛠 Creating a Plugin
 
 Creating your own plugin is extremely easy. A Pixoo Hub plugin is simply a GitHub repository containing a `plugin.json`, an `icon.png`, and a Python script.
 
