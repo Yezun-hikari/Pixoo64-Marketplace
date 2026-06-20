@@ -3,7 +3,9 @@ version: '3.8'
 services:
   hub:
     image: ghcr.io/yezun-hikari/pixoo64-marketplace:latest
-    network_mode: "host"
+    # network_mode: "host"
+    ports:
+      - "8000:8000"
     volumes:
       - ./plugins:/app/plugins
     restart: unless-stopped
