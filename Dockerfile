@@ -1,7 +1,7 @@
-FROM python:3.11-alpine
+FROM python:3.11-slim
 
-# Install git for plugin cloning, and tk/tcl for the pixoo library simulator
-RUN apk add --no-cache git tk tcl
+# Install git for plugin cloning, and python3-tk for the pixoo library simulator
+RUN apt-get update && apt-get install -y --no-install-recommends git python3-tk && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
