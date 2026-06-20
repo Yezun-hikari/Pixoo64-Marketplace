@@ -8,4 +8,6 @@ services:
       - "8000:8000"
     volumes:
       - ./plugins:/app/plugins
+      - ./settings.json:/app/settings.json
+      - ./repositories.json:/app/repositories.json
     restart: unless-stopped
