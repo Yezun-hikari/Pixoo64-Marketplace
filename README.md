@@ -40,6 +40,10 @@ The recommended way to run Pixoo Hub is via **Docker**.
    docker-compose up -d
    ```
 
+   *Note on image tags:* 
+   - By default, the `docker-compose.yml` uses the `:latest` tag, which contains the stable, officially released versions.
+   - If you want to test the newest, bleeding-edge development version, change the image tag in `docker-compose.yml` to `ghcr.io/yezun-hikari/pixoo64-marketplace:dev`.
+
 3. Open your browser and navigate to `http://localhost:8000`.
 
 ### Running Locally without Docker
