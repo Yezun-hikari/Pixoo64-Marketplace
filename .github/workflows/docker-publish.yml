@@ -1,6 +1,8 @@
 name: Build and Publish Docker Image
 
 on:
+  push:
+    branches: [ "main" ]
   release:
     types: [published] # Triggert nur, wenn du einen neuen Release auf GitHub veröffentlichst
   workflow_dispatch:   # Erlaubt es dir, den Build auch manuell über den "Actions" Tab zu starten
