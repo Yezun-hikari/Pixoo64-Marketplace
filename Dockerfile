@@ -1,7 +1,7 @@
 FROM python:3.11-alpine
 
-# Install git for plugin cloning
-RUN apk add --no-cache git
+# Install git for plugin cloning, and tk/tcl for the pixoo library simulator
+RUN apk add --no-cache git tk tcl
 
 WORKDIR /app
 
