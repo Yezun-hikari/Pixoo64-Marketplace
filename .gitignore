@@ -1,7 +1,7 @@
-.venv/
 __pycache__/
-plugins/
 *.pyc
+.venv/
+venv/
 .env
-settings.json
-repositories.json
+/data/
+.pytest_cache/

@@ -1,5 +1,5 @@
-fastapi
-uvicorn
-pydantic
-requests
-pixoo
+fastapi>=0.110
+uvicorn>=0.29
+requests>=2.31
+Pillow>=10.1
+packaging>=23

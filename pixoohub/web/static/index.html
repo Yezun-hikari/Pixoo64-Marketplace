@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pixoo Hub</title>
+<link rel="icon" href="default-icon.png">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<header class="bar">
+  <div class="mark"><span class="mark-grid" aria-hidden="true"></span>Pixoo Hub</div>
+  <div id="conn" class="conn" data-state="idle"><span class="dot"></span><span id="conn-text">…</span></div>
+</header>
+
+<div class="layout">
+  <aside class="panel">
+    <div class="device">
+      <canvas id="screen" width="320" height="320" aria-label="Aktuelle Anzeige des Pixoo"></canvas>
+    </div>
+    <p id="showing" class="showing">…</p>
+
+    <div class="quick">
+      <label class="field-inline" for="q-brightness">
+        <span class="lbl">Helligkeit</span>
+        <input id="q-brightness" type="range" min="0" max="100" step="5">
+        <output id="q-brightness-out" class="mono"></output>
+      </label>
+      <div class="field-inline">
+        <span class="lbl">Modus</span>
+        <div class="seg" role="radiogroup" aria-label="Anzeigemodus">
+          <button type="button" data-mode="priority" role="radio">Priorität</button>
+          <button type="button" data-mode="rotation" role="radio">Rotation</button>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main>
+    <nav class="tabs" role="tablist">
+      <button role="tab" data-tab="plugins" aria-selected="true">Plugins</button>
+      <button role="tab" data-tab="catalog">Katalog</button>
+      <button role="tab" data-tab="settings">Gerät &amp; Anzeige</button>
+    </nav>
+
+    <section id="tab-plugins" class="tab" role="tabpanel">
+      <p class="hint" id="order-hint"></p>
+      <ol id="plugin-list" class="plist"></ol>
+      <div id="plugins-empty" class="empty" hidden>
+        Noch keine Plugins installiert. Im <a href="#" data-goto="catalog">Katalog</a> findest du welche.
+      </div>
+    </section>
+
+    <section id="tab-catalog" class="tab" role="tabpanel" hidden>
+      <form id="repo-form" class="row-form">
+        <input id="repo-url" type="url" required placeholder="https://github.com/name/mein-plugin" aria-label="Repository-URL">
+        <button type="submit" class="btn">Repository hinzufügen</button>
+        <button type="button" id="catalog-refresh" class="btn ghost">Nach Updates suchen</button>
+      </form>
+      <ul id="catalog-list" class="clist"></ul>
+    </section>
+
+    <section id="tab-settings" class="tab" role="tabpanel" hidden>
+      <form id="settings-form" class="settings">
+        <fieldset>
+          <legend>Gerät</legend>
+          <label class="field">
+            <span class="lbl">IP-Adresse</span>
+            <span class="with-btn">
+              <input id="s-ip" type="text" placeholder="leer = automatisch suchen" autocomplete="off" spellcheck="false">
+              <button type="button" id="discover" class="btn ghost">Im Netzwerk suchen</button>
+            </span>
+            <span class="help" id="discover-result"></span>
+          </label>
+          <label class="field">
+            <span class="lbl">Helligkeit <output id="s-brightness-out" class="mono"></output></span>
+            <input id="s-brightness" type="range" min="0" max="100" step="5">
+          </label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Mehrere Plugins wollen anzeigen</legend>
+          <label class="radio"><input type="radio" name="mode" value="priority">
+            <span><b>Priorität</b> – das oberste Plugin in der Liste gewinnt.</span></label>
+          <label class="radio"><input type="radio" name="mode" value="rotation">
+            <span><b>Rotation</b> – abwechselnd, alle
+              <input id="s-rotation" type="number" min="5" max="3600" class="num"> Sekunden.</span></label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Kein Plugin will anzeigen</legend>
+          <label class="radio"><input type="radio" name="idle" value="off"><span>Display ausschalten</span></label>
+          <label class="radio"><input type="radio" name="idle" value="clock"><span>Divoom-Uhr anzeigen</span></label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Ruhezeit</legend>
+          <label class="check"><input id="s-quiet" type="checkbox">
+            <span>Display in dieser Zeit immer aus</span></label>
+          <div class="times">
+            <label>von <input id="s-quiet-start" type="time"></label>
+            <label>bis <input id="s-quiet-end" type="time"></label>
+          </div>
+        </fieldset>
+
+        <div class="actions"><button type="submit" class="btn">Speichern</button></div>
+      </form>
+    </section>
+  </main>
+</div>
+
+<dialog id="log-dialog">
+  <div class="dlg-head"><b id="log-title">Protokoll</b>
+    <button type="button" class="btn ghost" data-close>Schließen</button></div>
+  <pre id="log-body" class="log"></pre>
+</dialog>
+
+<div id="toasts" class="toasts" aria-live="polite"></div>
+
+<template id="tpl-plugin">
+  <li class="pitem">
+    <div class="prow">
+      <span class="grip" title="Ziehen zum Sortieren" aria-hidden="true"></span>
+      <span class="pos mono"></span>
+      <img class="picon" alt="" width="32" height="32">
+      <button type="button" class="pmain" aria-expanded="false">
+        <span class="pname"></span>
+        <span class="pstatus"></span>
+      </button>
+      <span class="pstate mono"></span>
+      <span class="pmove">
+        <button type="button" class="icon-btn" data-move="-1" aria-label="Nach oben">↑</button>
+        <button type="button" class="icon-btn" data-move="1" aria-label="Nach unten">↓</button>
+      </span>
+      <label class="switch" title="Aktiv"><input type="checkbox" class="penabled"><span></span></label>
+    </div>
+    <div class="pbody" hidden>
+      <p class="pdesc"></p>
+      <form class="pform"></form>
+      <div class="pfoot">
+        <button type="button" class="btn" data-op="save">Einstellungen speichern</button>
+        <button type="button" class="btn ghost" data-op="restart">Neu starten</button>
+        <button type="button" class="btn ghost" data-op="logs">Protokoll</button>
+        <button type="button" class="btn ghost" data-op="update" hidden>Aktualisieren</button>
+        <span class="spacer"></span>
+        <button type="button" class="btn danger" data-op="remove">Entfernen</button>
+      </div>
+      <p class="pmeta mono"></p>
+    </div>
+  </li>
+</template>
+
+<script src="app.js"></script>
+</body>
+</html>
