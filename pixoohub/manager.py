@@ -231,6 +231,7 @@ class PluginManager:
         self.sources: Dict[str, Dict[str, str]] = {}   # id -> {"url", "commit"}
         self.catalog: Dict[str, dict] = {}              # url -> entry
         self.jobs: Dict[str, dict] = {}                 # key -> {"state", "message", "t"}
+        self._pending: Dict[str, int] = {}              # key -> queued/running job count
         self._pool = ThreadPoolExecutor(max_workers=1, thread_name_prefix="plugin-jobs")
         self._lock = threading.RLock()
         self._catalog_checked = 0.0
@@ -297,14 +298,27 @@ class PluginManager:
             if job and job["state"] == "running" and not queue:
                 raise PluginError("Another operation is still running for this plugin.")
             self.jobs[key] = {"state": "running", "message": message, "t": time.time()}
+            self._pending[key] = self._pending.get(key, 0) + 1
+
+        def finish(state: str, msg: str) -> None:
+            # Only the last of several queued jobs may report the final state;
+            # otherwise the UI shows "done" while a restart is still pending.
+            with self._lock:
+                self._pending[key] -= 1
+                if self._pending[key] == 0:
+                    del self._pending[key]
+                    self.jobs[key] = {"state": state, "message": msg, "t": time.time()}
+                elif state == "error":
+                    self.jobs[key] = {"state": "running", "message": f"{message} (previous step failed: {msg})",
+                                      "t": time.time()}
 
         def run():
             try:
                 result = fn(*args)
-                self.jobs[key] = {"state": "done", "message": result or "Done", "t": time.time()}
+                finish("done", result or "Done")
             except Exception as e:
                 log.exception("job %s failed", key)
-                self.jobs[key] = {"state": "error", "message": str(e), "t": time.time()}
+                finish("error", str(e))
                 if key in self.procs and isinstance(e, PluginError):
                     self.procs[key].state = "failed"
                     self.procs[key].error = str(e)

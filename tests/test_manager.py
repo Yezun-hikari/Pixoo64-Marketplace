@@ -155,3 +155,18 @@ def test_import_legacy_settings(tmp_path):
     assert st.get("display")["mode"] == "rotation"
     assert st.get("order") == ["steam", "spotify"]
     assert st.plugin("spotify")["config"]["refresh_token"] == "r"
+
+
+def test_queued_jobs_report_done_only_at_the_end(env):
+    import threading
+    m, _ = env
+    gate = threading.Event()
+    seen = []
+    m._submit("x", "first", lambda: (gate.wait(5), seen.append(1)))
+    m._submit("x", "second", lambda: seen.append(2), queue=True)
+    assert m.jobs["x"]["state"] == "running"
+    gate.set()
+    assert wait_for(lambda: seen == [1, 2])
+    assert wait_for(lambda: m.jobs["x"]["state"] == "done")
+    # while job 2 was pending, the status never flipped to done early
+    assert "x" not in m._pending
