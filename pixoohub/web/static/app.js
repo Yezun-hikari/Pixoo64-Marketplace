@@ -275,6 +275,7 @@ $("#discover").addEventListener("click", async e => {
 
 /* --------------------------------------------------------------- plugins */
 
+const PLACEHOLDER_ICON = "plugin-placeholder.svg";
 const STATE_TEXT = {
   running: "läuft", starting: "startet", stopped: "aus", crashed: "abgestürzt", failed: "Fehler",
 };
@@ -347,8 +348,8 @@ function buildPluginRow(p) {
   el.dataset.id = p.id;
   const row = { el, data: p, formBuiltFor: null };
   const icon = $(".picon", el);
-  icon.src = p.has_icon ? `/api/plugins/${encodeURIComponent(p.id)}/icon` : "default-icon.png";
-  icon.onerror = () => { icon.src = "default-icon.png"; };
+  icon.src = p.has_icon ? `/api/plugins/${encodeURIComponent(p.id)}/icon` : PLACEHOLDER_ICON;
+  icon.onerror = () => { icon.onerror = null; icon.src = PLACEHOLDER_ICON; };
   $(".pdesc", el).textContent = p.description;
 
   const main = $(".pmain", el), body = $(".pbody", el);
@@ -631,8 +632,8 @@ async function loadCatalog() {
     action.append(h("button", { class: "icon-btn", type: "button", "aria-label": "Repository entfernen", title: "Aus Liste entfernen", text: "×",
       onclick: async () => { await attempt(() => api("DELETE", "/api/repositories?url=" + encodeURIComponent(repo.url))); loadCatalog(); } }));
 
-    const icon = h("img", { alt: "", src: repo.icon || "default-icon.png" });
-    icon.onerror = () => { icon.src = "default-icon.png"; };
+    const icon = h("img", { alt: "", src: repo.icon || PLACEHOLDER_ICON });
+    icon.onerror = () => { icon.onerror = null; icon.src = PLACEHOLDER_ICON; };
     let info;
     if (m) {
       info = h("div", {},
