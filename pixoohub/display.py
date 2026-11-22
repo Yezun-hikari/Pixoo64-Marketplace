@@ -218,7 +218,7 @@ class Display:
             found = discover()
             if not found:
                 self.status = {"connection": "no-device", "ip": None,
-                               "error": "No Pixoo found on the network. Enter the IP manually."}
+                               "error": "Kein Pixoo im Netzwerk gefunden. Bitte die IP von Hand eintragen."}
                 return
             ip = found[0]
             log.info("found Pixoo at %s", ip)

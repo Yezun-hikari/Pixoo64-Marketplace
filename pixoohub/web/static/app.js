@@ -614,13 +614,22 @@ async function loadCatalog() {
   let pending = false;
   for (const repo of r.repositories) {
     const m = repo.manifest;
-    const job = repo.job && repo.job.state === "running" ? repo.job : null;
-    pending = pending || repo.pending || !!job;
     const installed = repo.installed ? plugins.find(p => p.id === repo.installed) : null;
+    // updates of installed plugins run under the plugin id, installs under the URL
+    const running = [repo.job, installed && installed.job].find(j => j && j.state === "running");
+    pending = pending || repo.pending || !!running;
     const action = h("div", { class: "cact" });
-    if (job) action.append(h("span", { class: "mono", text: job.message + " …" }));
-    else if (installed) {
-      action.append(h("span", { class: "mono", text: installed.update_available ? "Update verfügbar" : "installiert" }));
+    if (running) action.append(h("span", { class: "mono", text: running.message + " …" }));
+    else if (installed && installed.update_available) {
+      const target = installed.latest_version && installed.latest_version !== installed.version
+        ? `Auf ${installed.latest_version} aktualisieren` : "Aktualisieren";
+      action.append(h("button", { class: "btn", type: "button", text: target, onclick: async () => {
+        await attempt(() => api("POST", `/api/plugins/${encodeURIComponent(installed.id)}/update`), "Update läuft");
+        await loadPlugins();
+        loadCatalog();
+      } }));
+    } else if (installed) {
+      action.append(h("span", { class: "mono", text: `installiert · v${installed.version}` }));
     } else if (m && m.hub_api < 2) {
       action.append(h("span", { class: "mono", title: "Das Plugin wurde für die alte Hub-Version geschrieben und muss erst aktualisiert werden.", text: "nicht kompatibel" }));
     } else if (m) {
@@ -649,7 +658,7 @@ async function loadCatalog() {
     if (repo.job && repo.job.state === "error") info.append(h("p", { class: "cerr", text: repo.job.message }));
     list.append(h("li", { class: "citem" }, icon, info, action));
   }
-  if (pending && !$("#tab-catalog").hidden) setTimeout(loadCatalog, 1500);
+  if (pending && !$("#tab-catalog").hidden) setTimeout(() => loadPlugins().then(loadCatalog), 1500);
 }
 
 $("#repo-form").addEventListener("submit", async e => {

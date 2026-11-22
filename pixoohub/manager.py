@@ -44,7 +44,7 @@ def normalize_url(url: str) -> str:
     if url.endswith(".git"):
         url = url[:-4]
     if not URL_RE.match(url):
-        raise PluginError("Not a valid https repository URL.")
+        raise PluginError("Keine gültige https-Adresse eines Repositorys.")
     return url
 
 
@@ -73,9 +73,9 @@ def read_manifest(plugin_dir: Path, fallback_id: str = "") -> dict:
         with open(path, encoding="utf-8") as f:
             raw = json.load(f)
     except FileNotFoundError as e:
-        raise PluginError("plugin.json is missing") from e
+        raise PluginError("plugin.json fehlt.") from e
     except ValueError as e:
-        raise PluginError(f"plugin.json is invalid: {e}") from e
+        raise PluginError(f"plugin.json ist ungültig: {e}") from e
     return validate_manifest(raw, fallback_id)
 
 
@@ -214,7 +214,7 @@ def ensure_deps(pid: str, plugin_dir: Path) -> None:
         if res.returncode != 0:
             shutil.rmtree(target, ignore_errors=True)
             tail = (res.stderr or res.stdout).strip().splitlines()[-3:]
-            raise PluginError("pip install failed: " + " | ".join(tail))
+            raise PluginError("Installation der Abhängigkeiten fehlgeschlagen: " + " | ".join(tail))
     marker.write_text(fingerprint)
 
 
@@ -252,7 +252,7 @@ class PluginManager:
             self._register(d, m)
         for pid in list(self.manifests):
             if self.state.plugin(pid)["enabled"]:
-                self._submit(pid, f"Starting {pid}", self._start, pid)
+                self._submit(pid, f"Starte {pid}", self._start, pid)
         self.refresh_catalog_async()
 
     def shutdown(self) -> None:
@@ -284,10 +284,10 @@ class PluginManager:
     def _start(self, pid: str) -> str:
         m = self.manifests[pid]
         if m["hub_api"] < API_VERSION:
-            raise PluginError(f"{m['name']} was written for an older hub (hub_api {m['hub_api']}). Update the plugin.")
+            raise PluginError(f"{m['name']} wurde für eine ältere Hub-Version geschrieben (hub_api {m['hub_api']}). Bitte das Plugin aktualisieren.")
         ensure_deps(pid, PLUGINS_DIR / pid)
         self.procs[pid].restart(self._config_for(pid))
-        return f"{m['name']} started"
+        return f"{m['name']} läuft"
 
     # ---- jobs ---------------------------------------------------------
     def _submit(self, key: str, message: str, fn, *args, queue: bool = False) -> None:
@@ -296,7 +296,7 @@ class PluginManager:
         with self._lock:
             job = self.jobs.get(key)
             if job and job["state"] == "running" and not queue:
-                raise PluginError("Another operation is still running for this plugin.")
+                raise PluginError("Für dieses Plugin läuft gerade schon ein Vorgang.")
             self.jobs[key] = {"state": "running", "message": message, "t": time.time()}
             self._pending[key] = self._pending.get(key, 0) + 1
 
@@ -309,13 +309,13 @@ class PluginManager:
                     del self._pending[key]
                     self.jobs[key] = {"state": state, "message": msg, "t": time.time()}
                 elif state == "error":
-                    self.jobs[key] = {"state": "running", "message": f"{message} (previous step failed: {msg})",
+                    self.jobs[key] = {"state": "running", "message": f"{message} (vorheriger Schritt fehlgeschlagen: {msg})",
                                       "t": time.time()}
 
         def run():
             try:
                 result = fn(*args)
-                finish("done", result or "Done")
+                finish("done", result or "Fertig")
             except Exception as e:
                 log.exception("job %s failed", key)
                 finish("error", str(e))
@@ -329,7 +329,7 @@ class PluginManager:
     # ---- public operations --------------------------------------------
     def install(self, url: str) -> str:
         url = normalize_url(url)
-        self._submit(url, "Installing", self._install, url)
+        self._submit(url, "Wird installiert", self._install, url)
         return url
 
     def _install(self, url: str) -> str:
@@ -341,7 +341,7 @@ class PluginManager:
             pid = m["id"]
             existing = self.sources.get(pid)
             if pid in self.manifests and existing and existing.get("url") != url:
-                raise PluginError(f"A different plugin with id '{pid}' is already installed.")
+                raise PluginError(f"Ein anderes Plugin mit der ID '{pid}' ist schon installiert.")
             if pid in self.procs:
                 self.procs[pid].stop()
             dest = PLUGINS_DIR / pid
@@ -353,33 +353,33 @@ class PluginManager:
             self.state.set("repositories", self.state.get("repositories") + [url])
         self.state.update_plugin(pid, enabled=True)
         self._start(pid)
-        return f"{m['name']} {m['version']} installed"
+        return f"{m['name']} {m['version']} installiert"
 
     def update(self, pid: str) -> None:
         if pid not in self.manifests:
-            raise PluginError("Unknown plugin.")
-        self._submit(pid, "Updating", self._update, pid)
+            raise PluginError("Unbekanntes Plugin.")
+        self._submit(pid, "Wird aktualisiert", self._update, pid)
 
     def _update(self, pid: str) -> str:
         d = PLUGINS_DIR / pid
         if not (d / ".git").exists():
-            raise PluginError("Plugin was not installed from git; update it manually.")
+            raise PluginError("Das Plugin wurde nicht über git installiert und muss von Hand aktualisiert werden.")
         _git("fetch", "--depth", "1", "origin", "HEAD", cwd=d, timeout=300)
         _git("reset", "--hard", "FETCH_HEAD", cwd=d)
         _git("clean", "-fdx", "-e", "__pycache__", cwd=d)
         m = read_manifest(d, pid)
         if m["id"] != pid:
-            raise PluginError("The plugin id changed upstream; remove and reinstall it.")
+            raise PluginError("Die Plugin-ID hat sich geändert – bitte entfernen und neu installieren.")
         self.procs[pid].stop()
         self._register(d, m)
         if self.state.plugin(pid)["enabled"]:
             self._start(pid)
-        return f"Updated to {m['version']}"
+        return f"Auf {m['version']} aktualisiert"
 
     def remove(self, pid: str) -> None:
         if pid not in self.manifests:
-            raise PluginError("Unknown plugin.")
-        self._submit(pid, "Removing", self._remove, pid)
+            raise PluginError("Unbekanntes Plugin.")
+        self._submit(pid, "Wird entfernt", self._remove, pid)
 
     def _remove(self, pid: str) -> str:
         self.procs[pid].stop()
@@ -389,38 +389,38 @@ class PluginManager:
         self.manifests.pop(pid, None)
         self.sources.pop(pid, None)
         self.state.forget_plugin(pid)
-        return "Removed"
+        return "Entfernt"
 
     def set_enabled(self, pid: str, enabled: bool) -> None:
         if pid not in self.manifests:
-            raise PluginError("Unknown plugin.")
+            raise PluginError("Unbekanntes Plugin.")
         self.state.update_plugin(pid, enabled=enabled)
         if enabled:
-            self._submit(pid, "Starting", self._start, pid, queue=True)
+            self._submit(pid, "Startet", self._start, pid, queue=True)
         else:
             self.procs[pid].stop()
         self.display.poke()
 
     def restart(self, pid: str) -> None:
         if pid not in self.manifests:
-            raise PluginError("Unknown plugin.")
-        self._submit(pid, "Restarting", self._start, pid, queue=True)
+            raise PluginError("Unbekanntes Plugin.")
+        self._submit(pid, "Startet neu", self._start, pid, queue=True)
 
     def save_config(self, pid: str, values: dict) -> None:
         m = self.manifests.get(pid)
         if not m:
-            raise PluginError("Unknown plugin.")
+            raise PluginError("Unbekanntes Plugin.")
         cfg = coerce_config(m["settings"], values, self.state.plugin(pid)["config"])
         self.state.update_plugin(pid, config=cfg)
         if self.state.plugin(pid)["enabled"]:
-            self._submit(pid, "Applying settings", self._start, pid, queue=True)
+            self._submit(pid, "Übernehme Einstellungen", self._start, pid, queue=True)
 
     def run_action(self, pid: str, name: str, values: dict) -> dict:
         m = self.manifests.get(pid)
         if not m:
-            raise PluginError("Unknown plugin.")
+            raise PluginError("Unbekanntes Plugin.")
         if not any(f["type"] == "action" and f["name"] == name for f in m["settings"]):
-            raise PluginError("Unknown action.")
+            raise PluginError("Unbekannte Aktion.")
         stored = self.state.plugin(pid)["config"]
         merged = with_defaults(m["settings"], stored)
         for f in m["settings"]:
@@ -438,7 +438,7 @@ class PluginManager:
         repos = self.state.get("repositories")
         if url not in repos:
             self.state.set("repositories", repos + [url])
-        self._submit("catalog:" + url, "Reading repository", self._refresh_one, url)
+        self._submit("catalog:" + url, "Repository wird gelesen", self._refresh_one, url)
         return url
 
     def remove_repository(self, url: str) -> None:
@@ -464,14 +464,14 @@ class PluginManager:
         try:
             head = _git("ls-remote", "--", url, "HEAD", timeout=30).split()
             if not head:
-                raise PluginError("repository is empty")
+                raise PluginError("Das Repository ist leer.")
             entry["commit"] = head[0]
             gh = GITHUB_RE.match(url)
             if gh:
                 base = f"https://raw.githubusercontent.com/{gh.group(1)}/{gh.group(2)}/{entry['commit']}"
                 r = requests.get(base + "/plugin.json", timeout=15)
                 if r.status_code == 404:
-                    raise PluginError("no plugin.json in repository")
+                    raise PluginError("Im Repository gibt es keine plugin.json.")
                 r.raise_for_status()
                 entry["manifest"] = validate_manifest(r.json(), gh.group(2))
                 entry["icon"] = base + "/icon.png"
@@ -484,7 +484,7 @@ class PluginManager:
         self.catalog[url] = entry
         if entry["error"]:
             raise PluginError(entry["error"])
-        return "Repository added"
+        return "Repository hinzugefügt"
 
     # ---- views --------------------------------------------------------
     def plugin_view(self, pid: str) -> dict:

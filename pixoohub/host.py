@@ -90,14 +90,14 @@ class PluginProcess:
 
     def action(self, name: str, values: dict) -> dict:
         if self.state != "running":
-            return {"ok": False, "message": "Plugin is not running.", "open_url": "", "values": {}}
+            return {"ok": False, "message": "Das Plugin läuft gerade nicht.", "open_url": "", "values": {}}
         aid = next(self._action_ids)
         slot = {"event": threading.Event(), "result": None}
         self._pending[aid] = slot
         self._write({"type": "action", "id": aid, "name": name, "values": values})
         try:
             if not slot["event"].wait(ACTION_TIMEOUT):
-                return {"ok": False, "message": "Plugin did not answer.", "open_url": "", "values": {}}
+                return {"ok": False, "message": "Das Plugin hat nicht geantwortet.", "open_url": "", "values": {}}
             return slot["result"]
         finally:
             self._pending.pop(aid, None)
@@ -202,7 +202,7 @@ class PluginProcess:
                 return  # an old process; a new one is already running
             self.display.release(self.id)
             for slot in list(self._pending.values()):
-                slot["result"] = {"ok": False, "message": "Plugin exited.", "open_url": "", "values": {}}
+                slot["result"] = {"ok": False, "message": "Das Plugin wurde beendet.", "open_url": "", "values": {}}
                 slot["event"].set()
             if not self._want_running:
                 return

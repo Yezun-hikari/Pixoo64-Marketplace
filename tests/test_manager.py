@@ -135,7 +135,7 @@ def test_outdated_plugin_is_refused(env):
     (d / "plugin.py").write_text("")
     m.load_installed()
     assert wait_for(lambda: m.jobs.get("old", {}).get("state") == "error")
-    assert "older hub" in m.jobs["old"]["message"]
+    assert "ältere Hub-Version" in m.jobs["old"]["message"]
     assert m.plugin_view("old")["outdated_api"]
 
 

@@ -112,7 +112,7 @@ def create_app(hub: Optional[Hub] = None) -> FastAPI:
 
     def need_plugin(pid: str):
         if pid not in hub.plugins.manifests:
-            raise HTTPException(404, "Unknown plugin")
+            raise HTTPException(404, "Unbekanntes Plugin")
 
     # ---- overview -----------------------------------------------------
     @app.get("/api/state")
